@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Secure FTP - Home</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      background: #0f172a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    .navbar a {
+      color: #93c5fd;
+      margin-left: 20px;
+      text-decoration: none;
+    }
+
+    .navbar a:hover {
+      color: #3b82f6;
+    }
+
+    .container {
+      padding: 40px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .hero img {
+      max-width: 400px;
+      height: auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.9);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+
+    .card h3 {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 10px;
+    }
+
+    input, button {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      margin-top: 5px;
+    }
+
+    input {
+      width: 100%;
+      background: #1e293b;
+      color: white;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+
+    .file {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      background: #1e293b;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .flash {
+      background: #16a34a;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div><strong>Secure FTP System</strong></div>
+  <div>
+    <a href="/">Home</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- FLASH MESSAGES -->
+  {% for msg in get_flashed_messages() %}
+    <div class="flash">{{ msg }}</div>
+  {% endfor %}
+
+  <!-- HERO SECTION -->
+  <div class="hero">
+    <div>
+      <h1>Welcome {{ session['user'] }}</h1>
+      <p>Secure File Transfer with Email Sharing</p>
+    </div>
+    <div>
+      <img src="{{ url_for('static', filename='images/hero.png') }}" alt="Hero Image">
+    </div>
+  </div>
+
+  <!-- GRID SECTION -->
+  <div class="grid">
+
+    <!-- CREATE FILE -->
+    <div class="card">
+      <h3>Create File</h3>
+      <form action="/create-file" method="post">
+        <input type="text" name="filename" placeholder="Enter file name.txt" required>
+        <button type="submit">Create</button>
+      </form>
+    </div>
+
+    <!-- UPLOAD FILE -->
+    <div class="card">
+      <h3>Upload File</h3>
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+
+    <!-- FILE LIST -->
+    <div class="card">
+      <h3>Files</h3>
+
+      {% for f in files %}
+      <div class="file">
+        <span>{{ f }}</span>
+
+        <div class="file-actions">
+
+          <!-- DOWNLOAD -->
+          <a href="/download/{{ f }}">⬇</a>
+
+          <!-- DELETE -->
+          <a href="/delete/{{ f }}" onclick="return confirm('Delete file?')">🗑</a>
+
+          <!-- SHARE -->
+          <form action="/share/{{ f }}" method="post" style="display:flex; gap:5px;">
+            <input type="email" name="email"
+                   placeholder="Enter email"
+                   required style="width:140px;">
+            <button type="submit">📧</button>
+          </form>
+
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+
+    <!-- RECENT ACTIVITY -->
+    <div class="card">
+      <h3>Recent Activity</h3>
+      {% for h in history %}
+        <p>{{ h[0] }} — {{ h[1] }}</p>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

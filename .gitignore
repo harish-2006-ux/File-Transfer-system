@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+users.db
+transfers.db
+server_files/
+.env

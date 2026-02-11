@@ -1,0 +1,111 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background: #0b0f1a;
+  color: #e5e7eb;
+}
+
+/* NAVBAR */
+.navbar {
+  background: #0f172a;
+  padding: 15px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar a {
+  color: #e5e7eb;
+  margin-left: 20px;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  color: #3b82f6;
+}
+
+/* MAIN */
+.container {
+  padding: 40px;
+}
+
+/* HERO SECTION */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 50px;
+}
+
+.hero-text {
+  width: 45%;
+}
+
+.hero-text h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.hero-text p {
+  color: #94a3b8;
+}
+
+/* HERO IMAGE */
+.hero-image {
+  width: 55%;
+}
+
+.hero-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 18px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* CARD */
+.card {
+  background: #111827;
+  padding: 25px;
+  border-radius: 14px;
+}
+
+/* FORM */
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: #1e293b;
+  border: none;
+  color: white;
+  border-radius: 8px;
+}
+
+button {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* FILE LIST */
+.file {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}

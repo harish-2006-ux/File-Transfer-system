@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Profile</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+  <a href="/">Home</a>
+  
+  <a href="/logout">Logout</a>
+</div>
+
+<h2>User Profile</h2>
+<p><b>Username:</b> {{ session['user'] }}</p>
+
+<h3>Recent File Transfers</h3>
+<ul>
+{% for h in history %}
+<li>{{ h[0] }} – {{ h[1] }} – {{ h[2] }}</li>
+{% endfor %}
+</ul>
+
+</body>
+</html>
