@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Network — VaultX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><span class="logo-dot"></span>VaultX</div>
+  <div class="sidebar-section-label">Navigation</div>
+  <a href="/" class="sidebar-link"><span class="s-icon">⚡</span> Dashboard</a>
+  <a href="/network" class="sidebar-link active"><span class="s-icon">🌐</span> Network</a>
+  <a href="/profile" class="sidebar-link"><span class="s-icon">👤</span> Profile</a>
+  <div class="sidebar-spacer"></div>
+  <a href="/logout" class="sidebar-link danger"><span class="s-icon">🚪</span> Logout</a>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Network</div>
+      <div class="page-sub">// Live server diagnostics</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-pill"><div class="status-dot"></div>Auto-refresh <span id="cdTimer" style="color:var(--c-cyan);font-weight:600;margin-left:4px;">10s</span></div>
+      <a href="/network" class="btn btn-ghost btn-sm" style="text-decoration:none;">↺ Refresh</a>
+    </div>
+  </div>
+
+  {% for msg in get_flashed_messages() %}<div class="flash">{{ msg }}</div>{% endfor %}
+
+  <!-- Stat grid -->
+  <div class="stat-grid stagger">
+    <div class="card stat-card green card-lift">
+      <span class="stat-icon">🟢</span>
+      <div class="stat-num" style="font-size:22px;">{{ network.status }}</div>
+      <div class="stat-label">Server Status</div>
+    </div>
+    <div class="card stat-card cyan card-lift">
+      <span class="stat-icon">⏱</span>
+      <div class="stat-num" style="font-size:22px;">{{ network.uptime }}</div>
+      <div class="stat-label">Uptime</div>
+    </div>
+    <div class="card stat-card violet card-lift">
+      <span class="stat-icon">🖥</span>
+      <div class="stat-num" style="font-size:20px;font-family:var(--f-mono);">{{ network.hostname }}</div>
+      <div class="stat-label">Hostname</div>
+    </div>
+    <div class="card stat-card gold card-lift">
+      <span class="stat-icon">🌐</span>
+      <div class="stat-num" style="font-size:20px;font-family:var(--f-mono);">{{ network.local_ip }}</div>
+      <div class="stat-label">IP Address</div>
+    </div>
+    <div class="card stat-card cyan card-lift">
+      <span class="stat-icon">🔌</span>
+      <div class="stat-num" style="font-family:var(--f-mono);">{{ network.port }}</div>
+      <div class="stat-label">Port</div>
+    </div>
+    <div class="card stat-card green card-lift">
+      <span class="stat-icon">📁</span>
+      <div class="stat-num">{{ network.total_files }}</div>
+      <div class="stat-label">Total Files</div>
+    </div>
+  </div>
+
+  <!-- CPU + Memory -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="stagger">
+    <div class="card">
+      <h3>CPU Usage <span class="h3-line"></span></h3>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;">
+        <span style="font-size:42px;font-weight:900;color:var(--c-cyan);" id="cpuNum">0</span>
+        <span style="font-family:var(--f-mono);font-size:16px;color:var(--c-muted);">%</span>
+      </div>
+      <div class="progress-track" style="height:8px;">
+        <div class="progress-fill cyan" id="cpuBar" style="width:0;"></div>
+      </div>
+      <div class="progress-labels"><span>0%</span><span>100%</span></div>
+
+      <!-- Mini sparkline canvas -->
+      <canvas id="cpuChart" height="50" style="width:100%;margin-top:14px;opacity:.7;"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Memory Usage <span class="h3-line"></span></h3>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;">
+        <span style="font-size:42px;font-weight:900;color:var(--c-violet);" id="memNum">0</span>
+        <span style="font-family:var(--f-mono);font-size:16px;color:var(--c-muted);">%</span>
+      </div>
+      <div class="progress-track" style="height:8px;">
+        <div class="progress-fill violet" id="memBar" style="width:0;"></div>
+      </div>
+      <div class="progress-labels"><span>0%</span><span>100%</span></div>
+
+      <canvas id="memChart" height="50" style="width:100%;margin-top:14px;opacity:.7;"></canvas>
+    </div>
+  </div>
+
+  <!-- Network traffic -->
+  <div class="card stagger" style="margin-bottom:20px;">
+    <h3>Network Traffic <span class="h3-line"></span></h3>
+    <div class="mini-grid">
+      <div class="mini-stat">
+        <div class="mini-stat-val">{{ "{:,.0f}".format(network.total_bytes_sent or 0) }}</div>
+        <div class="mini-stat-label">Bytes Sent</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-val">{{ "{:,.0f}".format(network.total_bytes_recv or 0) }}</div>
+        <div class="mini-stat-label">Bytes Received</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-val">{{ "{:,.0f}".format((network.total_bytes_sent or 0) + (network.total_bytes_recv or 0)) }}</div>
+        <div class="mini-stat-label">Total Traffic</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-val" style="color:var(--c-green);">Active</div>
+        <div class="mini-stat-label">Interface</div>
+      </div>
+
+      <!-- Live Network Graph -->
+      <h4 style="font-family:var(--f-mono);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--c-muted);margin:20px 0 14px 0;">Live Traffic Graph (bytes/sec)</h4>
+      <div style="position:relative;height:220px;background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,204,0.3);border-radius:12px;padding:15px;">
+        <canvas id="networkChart" style="width:100%;height:100%;"></canvas>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('networkChart').getContext('2d');
+
+        const chartData = {
+            labels: [],
+            datasets: [{
+                label: 'Upload',
+                data: [],
+                borderColor: '#00ffcc',
+                backgroundColor: 'rgba(0,255,204,0.1)',
+                tension: 0.3,
+                fill: true
+            }, {
+                label: 'Download',
+                data: [],
+                borderColor: '#ff4466',
+                backgroundColor: 'rgba(255,68,102,0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        };
+
+        const config = {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 0 },
+                scales: {
+                    x: { ticks: { color: '#4a6a80', maxTicksLimit: 12, font: { size: 11 } } },
+                    y: { ticks: { color: '#4a6a80', font: { size: 11 } }, grid: { color: 'rgba(0,255,204,0.1)' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#d4eaf7', font: { family: 'JetBrains Mono', size: 12 } } }
+                }
+            }
+        };
+
+        const networkChart = new Chart(ctx, config);
+
+        setInterval(() => {
+            fetch('/network-stats')
+                .then(res => res.json())
+                .then(dataPoint => {
+                    const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+                    if (chartData.labels.length > 25) {
+                        chartData.labels.shift();
+                        chartData.datasets[0].data.shift();
+                        chartData.datasets[1].data.shift();
+                    }
+                    chartData.labels.push(time);
+                    chartData.datasets[0].data.push(dataPoint.sent);
+                    chartData.datasets[1].data.push(dataPoint.received);
+                    networkChart.update('none');
+                }).catch(() => {});  // Silent fail on network error
+        }, 1000);
+      });
+      </script>
+
+    </div>
+  </div>
+
+
+  <!-- Logs -->
+  <div class="card stagger">
+    <h3>Connection Logs <span class="h3-line"></span></h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th><th>IP</th><th>Method</th><th>Path</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>{{ log.timestamp }}</td>
+            <td>{{ log.ip }}</td>
+            <td><span class="badge badge-{{ log.method }}">{{ log.method }}</span></td>
+            <td>{{ log.path }}</td>
+            <td><span class="badge badge-{{ log.status }}">{{ log.status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if not logs %}
+      <div style="text-align:center;padding:28px;font-family:var(--f-mono);font-size:13px;color:var(--c-muted);">No logs yet</div>
+      {% endif %}
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+const CPU_TARGET = {{ network.cpu_percent or 0 }};
+const MEM_TARGET = {{ network.memory_percent or 0 }};
+
+// Animate numbers
+function animateTo(el, target, unit='', duration=900){
+  let start=null, from=0;
+  function step(ts){
+    if(!start) start=ts;
+    const p=Math.min((ts-start)/duration,1);
+    const eased=1-Math.pow(1-p,3);
+    el.textContent=Math.round(from+(target-from)*eased)+unit;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    document.getElementById('cpuBar').style.width=CPU_TARGET+'%';
+    document.getElementById('memBar').style.width=MEM_TARGET+'%';
+    animateTo(document.getElementById('cpuNum'),CPU_TARGET);
+    animateTo(document.getElementById('memNum'),MEM_TARGET);
+    drawSparkline('cpuChart',CPU_TARGET,'rgba(0,200,255,');
+    drawSparkline('memChart',MEM_TARGET,'rgba(155,92,255,');
+  },400);
+});
+
+// Sparkline
+function drawSparkline(id, centerVal, colorBase){
+  const c=document.getElementById(id);
+  c.width=c.offsetWidth; const w=c.width, h=50;
+  const ctx=c.getContext('2d');
+  const pts=[];
+  for(let i=0;i<20;i++){
+    pts.push(Math.max(5,Math.min(95,centerVal+(Math.random()-0.5)*20)));
+  }
+  pts.push(centerVal);
+
+  // Gradient fill
+  const grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,colorBase+'0.3)');
+  grad.addColorStop(1,colorBase+'0)');
+
+  ctx.beginPath();
+  pts.forEach((v,i)=>{
+    const x=i/(pts.length-1)*w;
+    const y=h-(v/100)*h;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle=colorBase+'0.8)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+}
+
+// Countdown
+let secs=10;
+const cd=document.getElementById('cdTimer');
+setInterval(()=>{
+  secs--;cd.textContent=secs+'s';
+  if(secs<=0) window.location.reload();
+},1000);
+</script>
+</body>
+</html>

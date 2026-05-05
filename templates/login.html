@@ -1,103 +1,448 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login - Secure FTP</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — VaultX Secure FTP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cyan:#00c8ff;--green:#00ff88;--violet:#9b5cff;
+      --bg:#020408;--text:#d4eaf7;--muted:#4a6a80;
+      --f-d:'Outfit',sans-serif;--f-m:'JetBrains Mono',monospace;
+    }
+    html{height:100%}
+
+    /* ── Canvas BG ── */
+    body{
+      font-family:var(--f-d);background:var(--bg);
+      color:var(--text);min-height:100vh;overflow:hidden;
+      display:flex;align-items:center;justify-content:center;
+    }
+    #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+    /* ── Split layout ── */
+    .login-wrap{
+      display:flex;width:100%;max-width:1000px;height:580px;
+      border-radius:24px;overflow:hidden;
+      border:1px solid rgba(0,200,255,.15);
+      box-shadow:0 0 80px rgba(0,200,255,.08),0 40px 120px rgba(0,0,0,.8);
+      position:relative;z-index:10;
+      animation:wrapIn .8s cubic-bezier(.22,.68,0,1.2) both;
     }
 
-    .login-container {
-      background: rgba(17, 24, 39, 0.85);
-      padding: 40px;
-      border-radius: 16px;
-      width: 350px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(12px);
+    @keyframes wrapIn{
+      from{opacity:0;transform:scale(.9) translateY(40px);}
+      to{opacity:1;transform:scale(1) translateY(0);}
     }
 
-    .login-container h2 {
-      text-align: center;
-      margin-bottom: 25px;
-      color: #ffffff;
+    /* ── Left panel — animated visual ── */
+    .left-panel{
+      flex:1;background:linear-gradient(135deg,#020a14 0%,#040d1e 100%);
+      position:relative;overflow:hidden;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:48px;
     }
 
-    .login-container input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: white;
-      transition: 0.3s;
+    /* Orbiting rings */
+    .ring-wrap{position:relative;width:220px;height:220px;margin-bottom:32px;}
+    .ring{
+      position:absolute;top:50%;left:50%;border-radius:50%;
+      border:1px solid;transform:translate(-50%,-50%);
+    }
+    .ring-1{width:220px;height:220px;border-color:rgba(0,200,255,.2);animation:orbit1 12s linear infinite;}
+    .ring-2{width:160px;height:160px;border-color:rgba(0,255,136,.2);animation:orbit2 8s linear infinite;}
+    .ring-3{width:100px;height:100px;border-color:rgba(155,92,255,.3);animation:orbit3 5s linear infinite;}
+
+    .ring::after{
+      content:'';position:absolute;top:-4px;left:50%;
+      width:8px;height:8px;border-radius:50%;
+      transform:translateX(-50%);
+    }
+    .ring-1::after{background:var(--cyan);box-shadow:0 0 12px var(--cyan);}
+    .ring-2::after{background:var(--green);box-shadow:0 0 10px var(--green);}
+    .ring-3::after{background:var(--violet);box-shadow:0 0 10px var(--violet);}
+
+    @keyframes orbit1{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+    @keyframes orbit2{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(-360deg)}}
+    @keyframes orbit3{from{transform:translate(-50%,-50%) rotate(45deg)}to{transform:translate(-50%,-50%) rotate(405deg)}}
+
+    /* Lock icon center */
+    .lock-center{
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      width:56px;height:56px;border-radius:50%;
+      background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;
+      animation:lockPulse 3s ease infinite;
+    }
+    @keyframes lockPulse{
+      0%,100%{box-shadow:0 0 20px rgba(0,200,255,.2);}
+      50%{box-shadow:0 0 40px rgba(0,200,255,.5);}
     }
 
-    .login-container input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 10px #3b82f6;
+    /* Scan line */
+    .scan-line{
+      position:absolute;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,rgba(0,200,255,.6),transparent);
+      animation:scanDown 3s ease-in-out infinite;
+    }
+    @keyframes scanDown{
+      0%  {top:0;opacity:0}
+      10% {opacity:1}
+      90% {opacity:1}
+      100%{top:100%;opacity:0}
     }
 
-    .login-container button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
+    .left-title{
+      font-size:28px;font-weight:900;letter-spacing:-1px;text-align:center;
+      background:linear-gradient(135deg,#fff 0%,var(--cyan) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .left-sub{
+      font-family:var(--f-m);font-size:11px;color:var(--muted);
+      letter-spacing:2px;text-transform:uppercase;text-align:center;
+      margin-top:10px;
     }
 
-    .login-container button:hover {
-      transform: scale(1.03);
-      opacity: 0.9;
+    /* Floating data particles */
+    .data-bits{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+    .bit{
+      position:absolute;font-family:var(--f-m);font-size:10px;
+      color:rgba(0,200,255,.2);animation:bitFloat linear infinite;
+    }
+    @keyframes bitFloat{
+      from{transform:translateY(0);opacity:0}
+      10%{opacity:1}
+      90%{opacity:.8}
+      to{transform:translateY(-500px);opacity:0}
     }
 
-    .login-container a {
-      display: block;
-      text-align: center;
-      margin-top: 15px;
-      color: #93c5fd;
-      text-decoration: none;
+    /* ── Right panel — form ── */
+    .right-panel{
+      width:400px;flex-shrink:0;
+      background:rgba(4,10,20,.97);
+      border-left:1px solid rgba(0,200,255,.1);
+      padding:48px 44px;
+      display:flex;flex-direction:column;justify-content:center;
+      position:relative;overflow:hidden;
     }
 
-    .login-container a:hover {
-      text-decoration: underline;
+    /* Top accent line */
+    .right-panel::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,var(--cyan),var(--green),transparent);
+      animation:lineGlow 3s ease infinite;
+    }
+    @keyframes lineGlow{0%,100%{opacity:.5}50%{opacity:1}}
+
+    .form-head{margin-bottom:36px;}
+    .form-head .logo{
+      font-family:var(--f-m);font-size:12px;letter-spacing:3px;
+      text-transform:uppercase;color:var(--muted);margin-bottom:18px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .logo-dot{
+      width:8px;height:8px;border-radius:50%;background:var(--cyan);
+      box-shadow:0 0 10px var(--cyan);animation:logoPulse 2s ease infinite;
+    }
+    @keyframes logoPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+    .form-head h1{font-size:30px;font-weight:900;letter-spacing:-1px;color:#fff;}
+    .form-head p{font-family:var(--f-m);font-size:12px;color:var(--muted);margin-top:6px;}
+
+    .field{margin-bottom:20px;position:relative;}
+    .field label{
+      display:block;font-family:var(--f-m);font-size:10px;letter-spacing:2px;
+      text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+      transition:color .2s;
+    }
+    .field:focus-within label{color:var(--cyan);}
+
+    .field input{
+      width:100%;padding:13px 16px 13px 44px;
+      background:rgba(0,0,0,.5);border:1px solid rgba(0,200,255,.12);
+      border-radius:10px;color:var(--text);
+      font-family:var(--f-m);font-size:13px;
+      outline:none;transition:all .2s;
+    }
+    .field input::placeholder{color:rgba(74,106,128,.5);}
+    .field input:focus{
+      border-color:var(--cyan);
+      box-shadow:0 0 0 3px rgba(0,200,255,.1);
+      background:rgba(0,0,0,.7);
     }
 
-    .error {
-      color: #f87171;
-      text-align: center;
-      margin-bottom: 10px;
+    .field-icon{
+      position:absolute;left:14px;bottom:14px;
+      color:var(--muted);font-size:15px;pointer-events:none;
+      transition:color .2s;
+    }
+    .field:focus-within .field-icon{color:var(--cyan);}
+
+    /* Eye toggle */
+    .eye-btn{
+      position:absolute;right:12px;bottom:12px;
+      background:none;border:none;cursor:pointer;
+      color:var(--muted);font-size:16px;padding:2px;
+      transition:color .2s;width:auto;
+    }
+    .eye-btn:hover{color:var(--cyan);}
+
+    /* Submit button */
+    .submit-btn{
+      width:100%;padding:14px;margin-top:8px;
+      background:linear-gradient(135deg,var(--cyan) 0%,#0080bb 100%);
+      border:none;border-radius:10px;
+      color:#000;font-family:var(--f-d);font-size:15px;font-weight:800;
+      cursor:pointer;letter-spacing:.3px;
+      position:relative;overflow:hidden;
+      transition:all .2s;
+    }
+    .submit-btn::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,.2) 0%,transparent 60%);
+      opacity:0;transition:opacity .2s;
+    }
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,200,255,.45);}
+    .submit-btn:hover::before{opacity:1;}
+    .submit-btn:active{transform:none;}
+    .submit-btn.loading{
+      background:linear-gradient(90deg,rgba(0,200,255,.3),rgba(0,255,136,.3),rgba(0,200,255,.3));
+      background-size:200% 100%;pointer-events:none;
+      animation:btnLoad 1s ease infinite;
+    }
+    @keyframes btnLoad{0%{background-position:0%}100%{background-position:200%}}
+
+    /* Progress bar below button */
+    .login-progress{
+      height:2px;background:rgba(255,255,255,.05);border-radius:1px;
+      margin-top:8px;overflow:hidden;opacity:0;transition:opacity .3s;
+    }
+    .login-progress.active{opacity:1;}
+    .login-progress-fill{
+      height:100%;width:0;border-radius:1px;
+      background:linear-gradient(90deg,var(--cyan),var(--green));
+      transition:width .05s linear;
+    }
+
+    .flash-msg{
+      padding:12px 16px;border-radius:8px;margin-bottom:16px;
+      font-family:var(--f-m);font-size:12px;
+      background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.2);
+      border-left:3px solid var(--cyan);color:var(--cyan);
+    }
+
+    .form-foot{
+      text-align:center;margin-top:24px;
+      font-family:var(--f-m);font-size:12px;color:var(--muted);
+    }
+    .form-foot a{color:var(--cyan);text-decoration:none;transition:opacity .2s;}
+    .form-foot a:hover{opacity:.75;}
+
+    /* Animated stagger for form fields */
+    .form-head{animation:fadeUp .5s .1s ease both}
+    .field:nth-child(1){animation:fadeUp .5s .25s ease both}
+    .field:nth-child(2){animation:fadeUp .5s .33s ease both}
+    .submit-btn{animation:fadeUp .5s .40s ease both}
+    .form-foot{animation:fadeUp .5s .50s ease both}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+    /* Error shake */
+    .shake{animation:shake .4s ease both;}
+    @keyframes shake{
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-8px)}
+      60%{transform:translateX(8px)}
+    }
+
+    /* Responsive */
+    @media(max-width:700px){
+      .left-panel{display:none}
+      .login-wrap{height:auto;max-width:400px;border-radius:20px;}
+      .right-panel{width:100%;border-left:none;}
+      body{padding:20px;overflow:auto;}
     }
   </style>
 </head>
-
 <body>
 
-<div class="login-container">
-  <h2>Login</h2>
+<!-- Animated particle canvas -->
+<canvas id="bg-canvas"></canvas>
 
-  {% for msg in get_flashed_messages() %}
-    <p class="error">{{ msg }}</p>
-  {% endfor %}
+<div class="login-wrap">
 
-  <form method="post">
-    <input type="text" name="username" placeholder="Username" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Login</button>
-  </form>
+  <!-- LEFT: Visual panel -->
+  <div class="left-panel">
+    <div class="scan-line"></div>
 
-  <a href="/signup">Don't have an account? Sign Up</a>
+    <!-- Floating data bits -->
+    <div class="data-bits" id="bits"></div>
+
+    <!-- Orbiting rings -->
+    <div class="ring-wrap">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="lock-center">🔐</div>
+    </div>
+
+    <div class="left-title">VaultX</div>
+    <div class="left-sub">Secure File Protocol</div>
+  </div>
+
+  <!-- RIGHT: Form -->
+  <div class="right-panel">
+
+    {% for msg in get_flashed_messages() %}
+    <div class="flash-msg">{{ msg }}</div>
+    {% endfor %}
+
+    <div class="form-head">
+      <div class="logo"><span class="logo-dot"></span>VaultX / Auth</div>
+      <h1>Welcome back</h1>
+      <p>Enter credentials to access your vault</p>
+    </div>
+
+    <form method="POST" action="/login" id="loginForm">
+
+      <div class="field">
+        <label>Username</label>
+        <span class="field-icon">👤</span>
+        <input type="text" name="username" placeholder="your_username" autocomplete="username" required>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <span class="field-icon">🔑</span>
+        <input type="password" name="password" id="pwField" placeholder="••••••••" autocomplete="current-password" required>
+        <button type="button" class="eye-btn" id="eyeToggle" onclick="togglePw()">👁</button>
+      </div>
+
+      <div class="login-progress" id="loginProgress">
+        <div class="login-progress-fill" id="loginFill"></div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="loginBtn">
+        Login &amp; Send OTP →
+      </button>
+
+    </form>
+
+    <p class="form-foot">
+      No account? <a href="/signup">Create one</a>
+    </p>
+
+  </div>
 </div>
 
+<script>
+/* ── Particle canvas ── */
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W,H,particles=[];
+
+function resize(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener('resize',resize);
+
+function rand(min,max){return Math.random()*(max-min)+min;}
+
+class Particle{
+  constructor(){this.reset();}
+  reset(){
+    this.x=rand(0,W);this.y=rand(0,H);
+    this.size=rand(.5,1.8);this.speedX=rand(-.3,.3);this.speedY=rand(-.5,-.15);
+    this.opacity=rand(.1,.5);
+    this.color=Math.random()<.5?'0,200,255':'0,255,136';
+  }
+  update(){
+    this.x+=this.speedX;this.y+=this.speedY;
+    if(this.y<-5||this.x<-5||this.x>W+5)this.reset();
+  }
+  draw(){
+    ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${this.color},${this.opacity})`;ctx.fill();
+  }
+}
+
+for(let i=0;i<120;i++)particles.push(new Particle());
+
+function animate(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{p.update();p.draw();});
+  // connect nearby
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<80){
+        ctx.beginPath();
+        ctx.strokeStyle=`rgba(0,200,255,${(1-d/80)*.05})`;
+        ctx.lineWidth=.5;
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+/* ── Floating data bits ── */
+const bitsEl=document.getElementById('bits');
+const bitsArr=['0','1','AES','256','OTP','RSA','SHA','TLS','ENC','SEC','FTP','KEY'];
+for(let i=0;i<14;i++){
+  const b=document.createElement('span');
+  b.className='bit';
+  b.textContent=bitsArr[Math.floor(Math.random()*bitsArr.length)];
+  b.style.left=Math.random()*90+'%';
+  b.style.top=Math.random()*100+'%';
+  b.style.animationDuration=rand(8,20)+'s';
+  b.style.animationDelay=rand(0,8)+'s';
+  bitsEl.appendChild(b);
+}
+
+/* ── Password toggle ── */
+function togglePw(){
+  const f=document.getElementById('pwField');
+  const e=document.getElementById('eyeToggle');
+  const show=f.type==='password';
+  f.type=show?'text':'password';
+  e.textContent=show?'🙈':'👁';
+}
+
+/* ── Form submit ── */
+const form=document.getElementById('loginForm');
+const btn=document.getElementById('loginBtn');
+const progress=document.getElementById('loginProgress');
+const fill=document.getElementById('loginFill');
+
+form.addEventListener('submit',function(e){
+  btn.classList.add('loading');
+  btn.textContent='Authenticating...';
+  progress.classList.add('active');
+  let w=0;
+  const iv=setInterval(()=>{w=Math.min(w+rand(3,8),90);fill.style.width=w+'%';},120);
+  setTimeout(()=>clearInterval(iv),3000);
+});
+
+/* ── Input focus line ── */
+document.querySelectorAll('.field input').forEach(inp=>{
+  inp.addEventListener('focus',()=>{inp.parentElement.style.zIndex='10';});
+  inp.addEventListener('blur',()=>{inp.parentElement.style.zIndex='';});
+});
+
+function rand(a,b){return Math.random()*(b-a)+a;}
+</script>
 </body>
 </html>

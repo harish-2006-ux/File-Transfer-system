@@ -1,210 +1,404 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Secure FTP - Home</title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Dashboard — VaultX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: white;
-    }
-
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 40px;
-      background: #0f172a;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    }
-
-    .navbar a {
-      color: #93c5fd;
-      margin-left: 20px;
-      text-decoration: none;
-    }
-
-    .navbar a:hover {
-      color: #3b82f6;
-    }
-
-    .container {
-      padding: 40px;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-    }
-
-    .hero img {
-      max-width: 400px;
-      height: auto;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 25px;
-    }
-
-    .card {
-      background: rgba(17, 24, 39, 0.9);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-
-    .card h3 {
-      margin-bottom: 15px;
-      border-bottom: 1px solid #334155;
-      padding-bottom: 10px;
-    }
-
-    input, button {
-      padding: 8px;
-      border-radius: 6px;
-      border: none;
-      margin-top: 5px;
-    }
-
-    input {
-      width: 100%;
-      background: #1e293b;
-      color: white;
-    }
-
-    button {
-      background: #3b82f6;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #2563eb;
-    }
-
-    .file {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      background: #1e293b;
-      padding: 10px;
-      border-radius: 6px;
-    }
-
-    .file-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .flash {
-      background: #16a34a;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-    }
-
-  </style>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
 
-<div class="navbar">
-  <div><strong>Secure FTP System</strong></div>
-  <div>
-    <a href="/">Home</a>
-    <a href="/profile">Profile</a>
-    <a href="/logout">Logout</a>
+<!-- Mobile menu button -->
+<button class="mobile-menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</button>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-dot"></span>
+    VaultX
   </div>
-</div>
 
-<div class="container">
+  <div class="sidebar-section-label">Navigation</div>
+  <a href="/" class="sidebar-link active"><span class="s-icon">⚡</span> Dashboard</a>
+  <a href="/network" class="sidebar-link"><span class="s-icon">🌐</span> Network</a>
+  <a href="/profile" class="sidebar-link"><span class="s-icon">👤</span> Profile</a>
+  
+  <div class="sidebar-section-label">Advanced</div>
+  <a href="/analytics" class="sidebar-link"><span class="s-icon">📊</span> Analytics</a>
+  <a href="/search" class="sidebar-link"><span class="s-icon">🔍</span> Search</a>
+  <a href="/security" class="sidebar-link"><span class="s-icon">🔐</span> Security</a>
 
-  <!-- FLASH MESSAGES -->
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-section-label">System</div>
+  <!-- Live server status in sidebar -->
+  <div style="padding:12px 14px;border-radius:12px;background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.12);margin-bottom:8px;">
+    <div style="font-family:var(--f-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--c-muted);margin-bottom:8px;">Server</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="status-dot"></div>
+      <span style="font-family:var(--f-mono);font-size:12px;color:var(--c-green);">Online</span>
+    </div>
+    <div style="margin-top:8px;font-family:var(--f-mono);font-size:11px;color:var(--c-muted);">AES-256 Active</div>
+  </div>
+
+  <a href="/logout" class="sidebar-link danger"><span class="s-icon">🚪</span> Logout</a>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">// Welcome back, {{ session['user'] }}</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-pill">
+        <div class="status-dot"></div>
+        Encrypted
+      </div>
+      <div class="topbar-pill" id="liveClock" style="font-family:var(--f-mono);font-size:12px;"></div>
+    </div>
+  </div>
+
+  <!-- Flash -->
   {% for msg in get_flashed_messages() %}
-    <div class="flash">{{ msg }}</div>
+  <div class="flash">{{ msg }}</div>
   {% endfor %}
 
-  <!-- HERO SECTION -->
-  <div class="hero">
-    <div>
-      <h1>Welcome {{ session['user'] }}</h1>
-      <p>Secure File Transfer with Email Sharing</p>
+  <!-- Stats row -->
+  <div class="stat-grid stagger">
+    <div class="card stat-card cyan card-lift">
+      <span class="stat-icon">🔐</span>
+      <div class="stat-num" id="fileCount">{{ files|length }}</div>
+      <div class="stat-label">Encrypted Files</div>
     </div>
-    <div>
-      <img src="{{ url_for('static', filename='images/hero.png') }}" alt="Hero Image">
+    <div class="card stat-card green card-lift">
+      <span class="stat-icon">🛡</span>
+      <div class="stat-num">AES</div>
+      <div class="stat-label">Cipher / 256-bit</div>
+    </div>
+    <div class="card stat-card violet card-lift">
+      <span class="stat-icon">📡</span>
+      <div class="stat-num">OTP</div>
+      <div class="stat-label">Auth Active</div>
+    </div>
+    <div class="card stat-card gold card-lift">
+      <span class="stat-icon">⚡</span>
+      <div class="stat-num" id="txCount">{{ history|length if history else 0 }}</div>
+      <div class="stat-label">Transfers</div>
     </div>
   </div>
 
-  <!-- GRID SECTION -->
-  <div class="grid">
+  <!-- Main grid -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="stagger">
 
-    <!-- CREATE FILE -->
+    <!-- Upload card -->
     <div class="card">
-      <h3>Create File</h3>
-      <form action="/create-file" method="post">
-        <input type="text" name="filename" placeholder="Enter file name.txt" required>
-        <button type="submit">Create</button>
+      <h3>Upload File <span class="h3-line"></span></h3>
+
+      <!-- Drag & Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(0,200,255,0.4)" stroke-width="1.5" stroke-linecap="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <div class="drop-zone-text">
+          Drop file here or <span>browse</span>
+          <br><small style="font-size:10px;opacity:.6;margin-top:4px;display:block;">Max 10MB · Auto AES-256</small>
+        </div>
+      </div>
+
+      <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+        <input type="file" name="file" id="fileInput" required style="display:none;">
+
+        <!-- File preview row -->
+        <div id="filePreview" style="display:none;padding:10px 14px;background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:10px;margin-bottom:14px;font-family:var(--f-mono);font-size:12px;color:var(--c-cyan);display:flex;align-items:center;gap:10px;">
+          <span>📎</span>
+          <span id="fileName" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <span id="fileSize" style="color:var(--c-muted);flex-shrink:0;"></span>
+        </div>
+
+        <!-- Fake progress during upload -->
+        <div id="uploadProgress" style="display:none;margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--c-muted);margin-bottom:6px;">
+            <span>Encrypting &amp; uploading...</span><span id="upPct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill cyan" id="upFill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="uploadBtn" onclick="startUpload(this)">
+          Upload &amp; Encrypt →
+        </button>
       </form>
     </div>
 
-    <!-- UPLOAD FILE -->
+    <!-- Recent Activity -->
     <div class="card">
-      <h3>Upload File</h3>
-      <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <button type="submit">Upload</button>
-      </form>
-    </div>
+      <h3>Activity <span class="h3-line"></span></h3>
 
-    <!-- FILE LIST -->
-    <div class="card">
-      <h3>Files</h3>
-
-      {% for f in files %}
-      <div class="file">
-        <span>{{ f }}</span>
-
-        <div class="file-actions">
-
-          <!-- DOWNLOAD -->
-          <a href="/download/{{ f }}">⬇</a>
-
-          <!-- DELETE -->
-          <a href="/delete/{{ f }}" onclick="return confirm('Delete file?')">🗑</a>
-
-          <!-- SHARE -->
-          <form action="/share/{{ f }}" method="post" style="display:flex; gap:5px;">
-            <input type="email" name="email"
-                   placeholder="Enter email"
-                   required style="width:140px;">
-            <button type="submit">📧</button>
-          </form>
-
+      {% for h in history[:6] %}
+      <div class="activity-row">
+        <div class="activity-icon">
+          {% if h[1] in ['upload','↑'] %}📤
+          {% elif h[1] in ['download','↓'] %}📥
+          {% elif h[1] == 'delete' %}🗑
+          {% elif h[1] == 'share' %}📧
+          {% else %}📄{% endif %}
+        </div>
+        <div>
+          <div class="activity-text">{{ h[0] }}</div>
+          <div class="activity-time">{{ h[1] }}{% if h[2] %} · {{ h[2] }}{% endif %}</div>
         </div>
       </div>
       {% endfor %}
 
+      {% if not history %}
+      <div style="text-align:center;padding:28px 0;color:var(--c-muted);font-family:var(--f-mono);font-size:12px;">
+        No activity yet
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Files table -->
+  <div class="card stagger">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="margin:0;">Your Encrypted Files <span class="h3-line"></span></h3>
+      <div style="font-family:var(--f-mono);font-size:12px;color:var(--c-muted);">
+        {{ files|length }} file{{ 's' if files|length != 1 else '' }}
+      </div>
     </div>
 
-    <!-- RECENT ACTIVITY -->
-    <div class="card">
-      <h3>Recent Activity</h3>
-      {% for h in history %}
-        <p>{{ h[0] }} — {{ h[1] }}</p>
+    <!-- Search bar -->
+    {% if files %}
+    <div style="position:relative;margin-bottom:16px;">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--c-muted);font-size:14px;pointer-events:none;">🔍</span>
+      <input type="text" id="searchInput" onkeyup="filterFiles()" placeholder="Search files..." style="width:100%;padding:11px 16px 11px 42px;background:rgba(0,0,0,.4);border:1px solid var(--c-border);border-radius:10px;color:var(--c-text);font-family:var(--f-mono);font-size:13px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--c-cyan)'" onblur="this.style.borderColor='var(--c-border)'">
+    </div>
+    {% endif %}
+
+    <div id="filesList">
+      {% for f in files %}
+      <div class="file-row" data-name="{{ f|lower }}">
+        <div class="file-icon">🔐</div>
+        <div class="file-info">
+          <div class="file-name">{{ f }}</div>
+          <div class="file-meta">AES-256 encrypted</div>
+        </div>
+        <div class="file-actions">
+          <a href="/download/{{ f }}" class="btn btn-ghost btn-sm">↓ Download</a>
+          <form action="/share/{{ f }}" method="post" style="display:flex;gap:8px;">
+            <input type="email" name="email" placeholder="share@email.com" class="form-input" style="width:160px;padding:8px 12px;font-size:12px;">
+            <button type="submit" class="btn btn-ghost btn-sm">📧</button>
+          </form>
+          <a href="/delete/{{ f }}" onclick="return confirmDelete('{{ f }}')" class="btn btn-danger btn-sm">✕</a>
+        </div>
+      </div>
       {% endfor %}
     </div>
 
+    {% if not files %}
+    <div style="text-align:center;padding:48px 0;">
+      <div style="font-size:48px;margin-bottom:16px;opacity:.4;">📁</div>
+      <div style="font-family:var(--f-mono);font-size:14px;color:var(--c-muted);">No encrypted files yet</div>
+      <div style="font-family:var(--f-mono);font-size:11px;color:var(--c-dim);margin-top:6px;">Upload something above to get started</div>
+    </div>
+    {% endif %}
   </div>
 
+</main>
 </div>
 
+<!-- Delete confirm toast -->
+<div id="deleteToast" style="
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:rgba(4,10,20,.97);border:1px solid rgba(255,68,102,.3);
+  border-radius:16px;padding:20px 28px;z-index:999;
+  box-shadow:0 20px 60px rgba(0,0,0,.8);
+  transition:transform .3s cubic-bezier(.22,.68,0,1.2);
+  min-width:340px;text-align:center;
+">
+  <div style="font-size:13px;color:#d4eaf7;margin-bottom:16px;" id="deleteMsg"></div>
+  <div style="display:flex;gap:10px;justify-content:center;">
+    <button onclick="cancelDelete()" style="padding:9px 20px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#d4eaf7;font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;">Cancel</button>
+    <a id="deleteLink" href="#" style="display:inline-flex;align-items:center;padding:9px 20px;background:rgba(255,68,102,.15);border:1px solid rgba(255,68,102,.3);border-radius:8px;color:#ff4466;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;text-decoration:none;">Delete →</a>
+  </div>
+</div>
+
+<script>
+// WebSocket connection for real-time updates
+const socket = io();
+
+socket.on('connect', () => {
+  console.log('WebSocket connected');
+  socket.emit('join_room', { user_id: '{{ session["user"] }}', username: '{{ session["user"] }}' });
+});
+
+socket.on('file_uploaded', (data) => {
+  showNotification('✅ File Uploaded', data.message);
+});
+
+socket.on('file_downloaded', (data) => {
+  showNotification('📥 File Downloaded', data.message);
+});
+
+socket.on('file_deleted', (data) => {
+  showNotification('🗑️ File Deleted', data.message);
+});
+
+socket.on('new_login', (data) => {
+  showNotification('🔐 New Login', `Login from ${data.location.city || 'Unknown'}`);
+});
+
+socket.on('suspicious_activity', (data) => {
+  showNotification('⚠️ Security Alert', data.message, 'warning');
+});
+
+socket.on('notification', (data) => {
+  showNotification(data.title, data.message, data.type);
+});
+
+function showNotification(title, message, type = 'info') {
+  // Create notification element
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(4,10,20,.97);
+    border: 1px solid ${type === 'warning' ? 'rgba(255,68,102,.3)' : 'rgba(0,200,255,.3)'};
+    border-radius: 12px;
+    padding: 16px 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.6);
+    animation: slideIn 0.3s ease-out;
+  `;
+  
+  notif.innerHTML = `
+    <div style="font-weight: 600; color: #d4eaf7; margin-bottom: 4px;">${title}</div>
+    <div style="font-size: 13px; color: var(--c-muted);">${message}</div>
+  `;
+  
+  document.body.appendChild(notif);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    notif.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => notif.remove(), 300);
+  }, 5000);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
+// Sidebar toggle
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Live clock
+function updateClock(){
+  const d=new Date();
+  document.getElementById('liveClock').textContent=
+    d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000); updateClock();
+
+// Drag & drop
+const dz = document.getElementById('dropZone');
+const fi = document.getElementById('fileInput');
+const preview = document.getElementById('filePreview');
+const fileNameEl = document.getElementById('fileName');
+const fileSizeEl = document.getElementById('fileSize');
+
+dz.addEventListener('click', ()=>fi.click());
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave', ()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e=>{
+  e.preventDefault();dz.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f){const dt=new DataTransfer();dt.items.add(f);fi.files=dt.files;showPreview(f);}
+});
+fi.addEventListener('change', ()=>{if(fi.files[0]) showPreview(fi.files[0]);});
+
+function showPreview(f){
+  fileNameEl.textContent=f.name;
+  fileSizeEl.textContent=(f.size/1024).toFixed(1)+' KB';
+  preview.style.display='flex';
+}
+
+// Upload animation
+function startUpload(btn){
+  if(!fi.files.length) return;
+  const prog=document.getElementById('uploadProgress');
+  const fill=document.getElementById('upFill');
+  const pct=document.getElementById('upPct');
+  prog.style.display='block';
+  btn.classList.add('loading');
+  btn.textContent='Encrypting...';
+  let w=0;
+  const iv=setInterval(()=>{
+    w=Math.min(w+Math.random()*6+2,95);
+    fill.style.width=w+'%';
+    pct.textContent=Math.floor(w)+'%';
+  },100);
+  setTimeout(()=>clearInterval(iv),4000);
+}
+
+// File search
+function filterFiles(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.file-row').forEach(r=>{
+    r.style.display=r.dataset.name.includes(q)?'':'none';
+  });
+}
+
+// Delete confirm
+let pendingDelete=null;
+function confirmDelete(name){
+  pendingDelete=name;
+  document.getElementById('deleteMsg').textContent=`Delete "${name}"? This cannot be undone.`;
+  document.getElementById('deleteLink').href='/delete/'+encodeURIComponent(name);
+  const t=document.getElementById('deleteToast');
+  t.style.transform='translateX(-50%) translateY(0)';
+  return false;
+}
+function cancelDelete(){
+  document.getElementById('deleteToast').style.transform='translateX(-50%) translateY(80px)';
+}
+
+// Animate stat numbers on load
+document.querySelectorAll('.stat-num').forEach(el=>{
+  const target=parseInt(el.textContent);
+  if(isNaN(target)||target===0) return;
+  let current=0;
+  const step=Math.max(1,Math.floor(target/20));
+  const iv=setInterval(()=>{
+    current=Math.min(current+step,target);
+    el.textContent=current;
+    if(current>=target) clearInterval(iv);
+  },40);
+});
+</script>
 </body>
 </html>

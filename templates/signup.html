@@ -1,104 +1,203 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Sign Up - Secure FTP</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — VaultX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cyan:#00c8ff;--green:#00ff88;--violet:#9b5cff;--red:#ff4466;
+      --bg:#020408;--text:#d4eaf7;--muted:#4a6a80;
+      --f-d:'Outfit',sans-serif;--f-m:'JetBrains Mono',monospace;
+    }
+    body{
+      font-family:var(--f-d);background:var(--bg);color:var(--text);
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      padding:24px;overflow-x:hidden;
+    }
+    body::before{
+      content:'';position:fixed;inset:0;
+      background:
+        radial-gradient(ellipse 800px 600px at 80% 20%,rgba(155,92,255,.06) 0%,transparent 70%),
+        radial-gradient(ellipse 600px 500px at 20% 80%,rgba(0,200,255,.05) 0%,transparent 70%);
+      pointer-events:none;z-index:0;
     }
 
-    .signup-container {
-      background: rgba(17, 24, 39, 0.85);
-      padding: 40px;
-      border-radius: 16px;
-      width: 350px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(12px);
+    .card{
+      width:100%;max-width:500px;
+      background:rgba(4,10,20,.97);
+      border:1px solid rgba(0,200,255,.14);
+      border-radius:24px;padding:52px 48px;
+      position:relative;overflow:hidden;z-index:1;
+      box-shadow:0 40px 100px rgba(0,0,0,.8);
+      animation:wrapIn .7s cubic-bezier(.22,.68,0,1.2) both;
+    }
+    @keyframes wrapIn{from{opacity:0;transform:scale(.9) translateY(32px)}to{opacity:1;transform:none}}
+
+    /* Top accent */
+    .card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,var(--violet),var(--cyan),var(--green),transparent);
     }
 
-    .signup-container h2 {
-      text-align: center;
-      margin-bottom: 25px;
-      color: #ffffff;
+    /* Background hex pattern */
+    .card::after{
+      content:'';position:absolute;inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg width='60' height='52' viewBox='0 0 60 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.3v17.4L30 52 0 34.7V17.3z' fill='none' stroke='rgba(0,200,255,0.025)' stroke-width='1'/%3E%3C/svg%3E");
+      pointer-events:none;
     }
 
-    .signup-container input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: white;
-      transition: 0.3s;
+    .logo{
+      font-family:var(--f-m);font-size:11px;letter-spacing:3px;text-transform:uppercase;
+      color:var(--muted);margin-bottom:20px;display:flex;align-items:center;gap:8px;
     }
+    .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 10px var(--violet);animation:lp 2s ease infinite;}
+    @keyframes lp{0%,100%{opacity:1}50%{opacity:.4}}
 
-    .signup-container input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 10px #3b82f6;
-    }
+    h1{font-size:28px;font-weight:900;letter-spacing:-1px;color:#fff;margin-bottom:6px;}
+    .sub{font-family:var(--f-m);font-size:12px;color:var(--muted);margin-bottom:32px;}
 
-    .signup-container button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
+    .field{margin-bottom:18px;position:relative;}
+    .field label{display:block;font-family:var(--f-m);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;transition:color .2s;}
+    .field:focus-within label{color:var(--cyan);}
+    .field input{
+      width:100%;padding:13px 16px 13px 44px;
+      background:rgba(0,0,0,.5);border:1px solid rgba(0,200,255,.12);
+      border-radius:10px;color:var(--text);
+      font-family:var(--f-m);font-size:13px;
+      outline:none;transition:all .2s;
     }
+    .field input::placeholder{color:rgba(74,106,128,.5);}
+    .field input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,200,255,.1);background:rgba(0,0,0,.7);}
+    .field-icon{position:absolute;left:14px;bottom:14px;color:var(--muted);font-size:15px;pointer-events:none;transition:color .2s;}
+    .field:focus-within .field-icon{color:var(--cyan);}
 
-    .signup-container button:hover {
-      transform: scale(1.03);
-      opacity: 0.9;
-    }
+    /* Password strength */
+    .strength-wrap{margin-top:-10px;margin-bottom:18px;}
+    .strength-track{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
+    .strength-fill{height:100%;width:0;border-radius:2px;transition:all .4s ease;}
+    .strength-label{font-family:var(--f-m);font-size:11px;margin-top:5px;transition:color .3s;}
 
-    .signup-container a {
-      display: block;
-      text-align: center;
-      margin-top: 15px;
-      color: #93c5fd;
-      text-decoration: none;
+    /* Requirements */
+    .req-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:18px;}
+    .req{
+      display:flex;align-items:center;gap:6px;
+      font-family:var(--f-m);font-size:11px;color:var(--muted);
+      transition:color .3s;
     }
+    .req.met{color:var(--green);}
+    .req-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s;}
+    .req.met .req-dot{background:var(--green);box-shadow:0 0 8px var(--green);}
 
-    .signup-container a:hover {
-      text-decoration: underline;
+    button[type="submit"]{
+      width:100%;padding:14px;
+      background:linear-gradient(135deg,var(--cyan) 0%,#0080bb 100%);
+      border:none;border-radius:10px;
+      color:#000;font-family:var(--f-d);font-size:15px;font-weight:800;
+      cursor:pointer;position:relative;overflow:hidden;transition:all .2s;margin-top:4px;
     }
+    button[type="submit"]:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,200,255,.4);}
 
-    .error {
-      color: #f87171;
-      text-align: center;
-      margin-bottom: 10px;
-    }
+    .flash-msg{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-family:var(--f-m);font-size:12px;background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.2);border-left:3px solid var(--cyan);color:var(--cyan);}
+
+    .foot{text-align:center;margin-top:22px;font-family:var(--f-m);font-size:12px;color:var(--muted);}
+    .foot a{color:var(--cyan);text-decoration:none;}
+
+    /* Stagger */
+    .logo{animation:fu .5s .05s ease both}
+    h1,p{animation:fu .5s .1s ease both}
+    .field:nth-child(1){animation:fu .5s .2s ease both}
+    .field:nth-child(2){animation:fu .5s .28s ease both}
+    .field:nth-child(3){animation:fu .5s .36s ease both}
+    .strength-wrap,.req-list{animation:fu .5s .44s ease both}
+    button{animation:fu .5s .52s ease both}
+    .foot{animation:fu .5s .60s ease both}
+    @keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   </style>
 </head>
-
 <body>
-
-<div class="signup-container">
-  <h2>Create Account</h2>
-
+<div class="card">
   {% for msg in get_flashed_messages() %}
-    <p class="error">{{ msg }}</p>
+  <div class="flash-msg">{{ msg }}</div>
   {% endfor %}
 
-  <form method="post">
-    <input type="text" name="username" placeholder="Username" required>
-    <input type="email" name="email" placeholder="Email Address" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Sign Up</button>
+  <div class="logo"><span class="logo-dot"></span>VaultX / Register</div>
+  <h1>Create Account</h1>
+  <p class="sub">Join the encrypted file network</p>
+
+  <form method="POST">
+    <div class="field">
+      <label>Username</label>
+      <span class="field-icon">👤</span>
+      <input type="text" name="username" placeholder="choose_a_username" autocomplete="username" required>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <span class="field-icon">📧</span>
+      <input type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <span class="field-icon">🔑</span>
+      <input type="password" name="password" id="pwField" placeholder="min 8 characters" autocomplete="new-password" required>
+    </div>
+
+    <div class="strength-wrap">
+      <div class="strength-track"><div class="strength-fill" id="sFill"></div></div>
+      <div class="strength-label" id="sLabel"></div>
+    </div>
+
+    <div class="req-list" id="reqList">
+      <div class="req" id="req-len"><span class="req-dot"></span>8+ characters</div>
+      <div class="req" id="req-upper"><span class="req-dot"></span>Uppercase letter</div>
+      <div class="req" id="req-num"><span class="req-dot"></span>Number</div>
+      <div class="req" id="req-sym"><span class="req-dot"></span>Symbol</div>
+    </div>
+
+    <button type="submit">Create Secure Account →</button>
   </form>
 
-  <a href="/login">Already have an account? Login</a>
+  <p class="foot">Already have an account? <a href="/login">Sign in</a></p>
 </div>
 
+<script>
+const pw = document.getElementById('pwField');
+const fill = document.getElementById('sFill');
+const label = document.getElementById('sLabel');
+
+const checks = {
+  len:   v => v.length >= 8,
+  upper: v => /[A-Z]/.test(v),
+  num:   v => /[0-9]/.test(v),
+  sym:   v => /[^A-Za-z0-9]/.test(v),
+};
+
+pw.addEventListener('input', () => {
+  const v = pw.value;
+  const score = Object.values(checks).filter(fn => fn(v)).length;
+  Object.entries(checks).forEach(([k,fn]) => {
+    document.getElementById('req-'+k).classList.toggle('met', fn(v));
+  });
+
+  const levels = [
+    {w:'0%',  c:'transparent',   t:''},
+    {w:'25%', c:'#ff4466',       t:'Too weak'},
+    {w:'50%', c:'#ffcc44',       t:'Weak'},
+    {w:'75%', c:'#00c8ff',       t:'Good'},
+    {w:'100%',c:'#00ff88',       t:'Strong ✓'},
+  ];
+  const lvl = levels[score];
+  fill.style.width = lvl.w;
+  fill.style.background = lvl.c;
+  fill.style.boxShadow = score > 0 ? `0 0 8px ${lvl.c}` : 'none';
+  label.textContent = lvl.t;
+  label.style.color = lvl.c;
+});
+</script>
 </body>
 </html>
