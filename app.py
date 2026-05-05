@@ -853,11 +853,17 @@ def server_error(e):
     return "Internal server error", 500
 
 if __name__ == '__main__':
+    # Get host and port from environment variables (for deployment)
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 8000))
+    debug = os.getenv('DEBUG', 'True').lower() == 'true'
+    
     print("=" * 60)
     print("VaultX - Secure File Sharing System")
     print("=" * 60)
-    print(f"Server starting on http://127.0.0.1:8000")
+    print(f"Server starting on http://{host}:{port}")
     print(f"Upload folder: {os.path.abspath(UPLOAD_FOLDER)}")
+    print(f"Debug mode: {debug}")
     print("=" * 60)
     
     if ADVANCED_FEATURES_ENABLED:
@@ -877,6 +883,6 @@ if __name__ == '__main__':
     
     # Use socketio.run if available, otherwise regular Flask
     if socketio:
-        socketio.run(app, host="127.0.0.1", port=8000, debug=True, allow_unsafe_werkzeug=True)
+        socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True)
     else:
-        app.run(host="127.0.0.1", port=8000, debug=True)
+        app.run(host=host, port=port, debug=debug)
