@@ -18,7 +18,7 @@ psutil==6.1.0
 
 # Database
 supabase==2.3.4
-postgrest-py==0.10.6
+# Note: postgrest-py removed - already included in supabase package
 
 # HTTP Requests (for geolocation)
 requests==2.31.0
