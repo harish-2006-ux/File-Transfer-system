@@ -5,14 +5,19 @@ import asyncio
 
 load_dotenv()
 
-# Generate valid key if not set
-if 'ENCRYPTION_KEY' not in os.environ or not os.getenv('ENCRYPTION_KEY'):
-    key = Fernet.generate_key()
-    print(f'Generated new encryption key: {key.decode()}')
-    print('Add to .env: ENCRYPTION_KEY=' + key.decode())
-    KEY = key
+# Use environment key or fallback (production should always have ENCRYPTION_KEY set)
+encryption_key = os.getenv('ENCRYPTION_KEY')
+if not encryption_key:
+    # Only generate in development - production must have ENCRYPTION_KEY set
+    if os.getenv('DEBUG', 'True').lower() == 'true':
+        key = Fernet.generate_key()
+        print(f'⚠️  Development: Generated encryption key: {key.decode()}')
+        print('   Add to .env: ENCRYPTION_KEY=' + key.decode())
+        KEY = key
+    else:
+        raise ValueError("ENCRYPTION_KEY environment variable must be set in production")
 else:
-    KEY = os.getenv('ENCRYPTION_KEY').encode()
+    KEY = encryption_key.encode()
 
 cipher_suite = Fernet(KEY)
 
