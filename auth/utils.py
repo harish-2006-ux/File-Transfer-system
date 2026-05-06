@@ -42,9 +42,17 @@ def get_user(username: str):
 
 def send_otp_email(email: str, otp: str) -> bool:
     """Send OTP email with timeout protection for production deployment."""
+    # Check if email is configured
+    sender_email = os.getenv('SENDER_EMAIL')
+    sender_password = os.getenv('SENDER_PASSWORD')
+    
+    if not sender_email or not sender_password:
+        print(f"⚠️  Email not configured - OTP: {otp} (for {email})")
+        return False
+    
     msg = EmailMessage()
     msg['Subject'] = 'Your VaultX OTP'
-    msg['From'] = os.getenv('SENDER_EMAIL')
+    msg['From'] = sender_email
     msg['To'] = email
     msg.set_content(f'Your OTP: {otp} (5min valid)')
     
@@ -52,13 +60,14 @@ def send_otp_email(email: str, otp: str) -> bool:
         # Use timeout to prevent worker hanging
         with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
             server.starttls()
-            server.login(os.getenv('SENDER_EMAIL'), os.getenv('SENDER_PASSWORD'))
+            server.login(sender_email, sender_password)
             server.send_message(msg)
             server.quit()
         print(f"✅ OTP email sent successfully to {email}")
         return True
     except Exception as e:
         print(f"❌ Email sending failed: {e}")
+        print(f"🔐 OTP for manual use: {otp}")
         return False
 
 def generate_totp_secret() -> str:
