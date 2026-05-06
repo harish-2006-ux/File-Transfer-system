@@ -19,9 +19,6 @@ if not encryption_key:
     KEY = key
 else:
     KEY = encryption_key.encode()
-    KEY = key
-else:
-    KEY = os.getenv('ENCRYPTION_KEY').encode()
 
 cipher_suite = Fernet(KEY)
 
