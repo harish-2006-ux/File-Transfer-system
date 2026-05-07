@@ -1,188 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Verify OTP — VaultX</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--cyan:#00c8ff;--green:#00ff88;--bg:#020408;--text:#d4eaf7;--muted:#4a6a80;--red:#ff4466;}
-    body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow-x:hidden;}
-    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 700px 500px at 50% 50%,rgba(0,200,255,.05) 0%,transparent 70%);pointer-events:none;}
+{% extends "base.html" %}
 
-    .card{
-      width:100%;max-width:460px;
-      background:rgba(4,10,20,.97);
-      border:1px solid rgba(0,200,255,.14);border-radius:24px;
-      padding:52px 48px;position:relative;overflow:hidden;
-      box-shadow:0 40px 100px rgba(0,0,0,.8);
-      animation:wIn .7s cubic-bezier(.22,.68,0,1.2) both;
-    }
-    @keyframes wIn{from{opacity:0;transform:scale(.9) translateY(28px)}to{opacity:1;transform:none}}
-    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--green),transparent);}
+{% block title %}OTP Verification - VaultX{% endblock %}
 
-    /* Animated lock */
-    .lock-wrap{text-align:center;margin-bottom:32px;}
-    .lock-outer{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:80px;height:80px;border-radius:50%;
-      border:1px solid rgba(0,200,255,.25);
-      background:rgba(0,200,255,.05);
-      position:relative;
-      animation:lockGlow 3s ease infinite alternate;
-    }
-    @keyframes lockGlow{from{box-shadow:0 0 20px rgba(0,200,255,.2)}to{box-shadow:0 0 50px rgba(0,200,255,.5)}}
-    .lock-outer::before,.lock-outer::after{
-      content:'';position:absolute;border-radius:50%;border:1px dashed rgba(0,200,255,.15);
-      animation:spin linear infinite;
-    }
-    .lock-outer::before{width:110px;height:110px;animation-duration:12s;}
-    .lock-outer::after{width:140px;height:140px;animation-duration:18s;animation-direction:reverse;}
-    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-    .lock-emoji{font-size:30px;z-index:1;}
+{% block content %}
+<h2>🔑 Enter OTP</h2>
+<p style="text-align: center; color: #666; margin-bottom: 2rem;">
+    We've sent a 6-digit code to {{ email }}
+</p>
 
-    .logo{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:20px;text-align:center;}
-    h1{font-size:28px;font-weight:900;letter-spacing:-1px;text-align:center;color:#fff;margin-bottom:6px;}
-    .sub{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px;}
-    .email-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.2);font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan);margin-bottom:28px;}
-
-    /* OTP boxes */
-    .otp-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:8px;}
-    .otp-box{
-      aspect-ratio:1;
-      text-align:center;padding:0;
-      background:rgba(0,0,0,.5);
-      border:1px solid rgba(0,200,255,.14);
-      border-radius:12px;
-      font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;
-      color:var(--cyan);outline:none;
-      transition:all .2s;
-      caret-color:var(--cyan);
-    }
-    .otp-box:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,200,255,.15);background:rgba(0,200,255,.04);transform:scale(1.06);}
-    .otp-box.filled{border-color:rgba(0,200,255,.4);background:rgba(0,200,255,.06);}
-    .otp-box.error{border-color:var(--red);animation:shake .4s ease both;}
-    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}60%{transform:translateX(6px)}}
-
-    /* Timer */
-    .timer-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-    .timer{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);}
-    .timer-val{color:var(--cyan);font-weight:600;}
-    .timer-bar{flex:1;height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin:0 14px;overflow:hidden;}
-    .timer-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:1px;transition:width 1s linear;}
-
-    button[type="submit"]{
-      width:100%;padding:14px;margin-top:4px;
-      background:linear-gradient(135deg,var(--cyan) 0%,#0080bb 100%);
-      border:none;border-radius:10px;color:#000;
-      font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;
-      cursor:pointer;transition:all .2s;
-    }
-    button[type="submit"]:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,200,255,.4);}
-    button[type="submit"]:disabled{opacity:.4;cursor:default;}
-
-    .flash-msg{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.2);border-left:3px solid var(--cyan);color:var(--cyan);}
-    .foot{text-align:center;margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
-    .foot a{color:var(--cyan);text-decoration:none;}
-
-    .lock-wrap{animation:fu .5s .05s ease both}
-    h1,.sub,.email-badge{animation:fu .5s .15s ease both}
-    .otp-row{animation:fu .5s .25s ease both}
-    .timer-row{animation:fu .5s .32s ease both}
-    button{animation:fu .5s .40s ease both}
-    @keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-  </style>
-</head>
-<body>
-<div class="card">
-  {% for msg in get_flashed_messages() %}
-  <div class="flash-msg">{{ msg }}</div>
-  {% endfor %}
-
-  <div class="lock-wrap">
-    <div class="lock-outer"><span class="lock-emoji">🔑</span></div>
-  </div>
-
-  <div class="logo">VaultX / 2FA Verification</div>
-  <h1>Enter OTP</h1>
-  <p class="sub">6-digit code sent to</p>
-  <div style="text-align:center;margin-bottom:28px;">
-    <span class="email-badge">📧 {{ session.user_email if session.user_email else 'your email' }}</span>
-  </div>
-
-  <form method="POST" id="otpForm">
-    <div class="otp-row" id="otpRow">
-      <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
-      <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
-      <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
-      <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
-      <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
-      <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
+<form method="POST">
+    <div class="form-group">
+        <label for="otp">6-Digit OTP</label>
+        <input type="text" id="otp" name="otp" required maxlength="6" pattern="[0-9]{6}" 
+               style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
     </div>
-    <input type="hidden" name="otp" id="otpHidden">
+    
+    <button type="submit" class="btn">Verify OTP</button>
+</form>
 
-    <div class="timer-row">
-      <div class="timer">Expires in <span class="timer-val" id="timerVal">05:00</span></div>
-      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
-    </div>
-
-    <button type="submit" id="submitBtn" disabled>Verify &amp; Unlock →</button>
-  </form>
-
-  <p class="foot">Wrong code? <a href="/login">Try again</a></p>
+<div class="nav-links">
+    <a href="{{ url_for('login') }}">Back to Login</a>
 </div>
 
-<script>
-const boxes = Array.from(document.querySelectorAll('.otp-box'));
-const hidden = document.getElementById('otpHidden');
-const btn = document.getElementById('submitBtn');
-
-function syncHidden(){
-  const val = boxes.map(b=>b.value).join('');
-  hidden.value = val;
-  btn.disabled = val.length < 6;
-}
-
-boxes.forEach((box,i)=>{
-  box.addEventListener('input', e=>{
-    const v = (e.data||box.value).replace(/\D/g,'');
-    box.value = v.slice(-1);
-    box.classList.toggle('filled', !!box.value);
-    if(box.value && i<5) boxes[i+1].focus();
-    syncHidden();
-  });
-  box.addEventListener('keydown', e=>{
-    if(e.key==='Backspace'){
-      if(!box.value && i>0){boxes[i-1].focus();boxes[i-1].value='';boxes[i-1].classList.remove('filled');}
-      else box.classList.remove('filled');
-      syncHidden();
-    }
-    if(e.key==='ArrowLeft'&&i>0) boxes[i-1].focus();
-    if(e.key==='ArrowRight'&&i<5) boxes[i+1].focus();
-  });
-  box.addEventListener('paste', e=>{
-    const t=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
-    e.preventDefault();
-    t.split('').forEach((c,j)=>{if(boxes[j]){boxes[j].value=c;boxes[j].classList.add('filled');}});
-    boxes[Math.min(t.length,5)].focus();
-    syncHidden();
-  });
-});
-boxes[0].focus();
-
-// Countdown 5 min
-let total=300,elapsed=0;
-const timerVal=document.getElementById('timerVal');
-const timerFill=document.getElementById('timerFill');
-const iv=setInterval(()=>{
-  elapsed++;
-  const rem=total-elapsed;
-  const m=String(Math.floor(rem/60)).padStart(2,'0');
-  const s=String(rem%60).padStart(2,'0');
-  timerVal.textContent=`${m}:${s}`;
-  timerFill.style.width=(rem/total*100)+'%';
-  if(rem<=0){clearInterval(iv);timerVal.textContent='Expired';timerVal.style.color='#ff4466';timerFill.style.background='#ff4466';}
-},1000);
-</script>
-</body>
-</html>
+<div style="margin-top: 2rem; padding: 1rem; background: #fff3cd; border-radius: 8px; font-size: 0.9rem; color: #856404;">
+    <strong>Note:</strong> Check your email for the OTP. If email is not configured, the OTP will be displayed in the flash message above.
+</div>
+{% endblock %}

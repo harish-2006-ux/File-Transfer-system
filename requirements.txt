@@ -1,31 +1,11 @@
-# VaultX - Complete Requirements
-
-# Core Framework
-flask==3.0.3
-flask-socketio==5.6.1
-python-socketio>=5.12.0
-
-# Security & Authentication
-bcrypt==4.2.0
-cryptography==43.0.3
-python-dotenv==1.0.1
-pyotp==2.9.0
-
-# Rate Limiting
-flask-limiter==3.7.0
-
-# System Monitoring
-psutil==6.1.0
-
-# Database
-supabase==2.3.4
-# Note: postgrest-py removed - already included in supabase package
-
-# HTTP Requests (for geolocation)
-requests==2.31.0
-
-# Production Server
+# Core Flask dependencies
+Flask==3.0.3
 gunicorn==21.2.0
 
-# WebSocket Support
-eventlet==0.33.3
+# Security and encryption
+bcrypt==4.2.0
+cryptography==43.0.3
+
+# Environment and utilities
+python-dotenv==1.0.1
+Werkzeug==3.1.8

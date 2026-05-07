@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Error - VaultX{% endblock %}
+
+{% block content %}
+<h2>❌ Error</h2>
+<p style="text-align: center; color: #666; margin-bottom: 2rem;">
+    {{ error }}
+</p>
+
+<div class="nav-links">
+    <a href="{{ url_for('home') }}">🏠 Go Home</a>
+    <a href="{{ url_for('dashboard') }}">📁 Dashboard</a>
+</div>
+{% endblock %}
