@@ -175,7 +175,7 @@ def log_file_action(username, filename, action, ip_address):
 # Authentication decorator
 def login_required(f):
     def decorated_function(*args, **kwargs):
-        if 'username' not in session:
+        if 'user' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
@@ -185,7 +185,7 @@ def login_required(f):
 @app.route('/')
 def home():
     """Home page - redirect to dashboard if logged in"""
-    if 'username' in session:
+    if 'user' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
@@ -260,7 +260,8 @@ def verify_otp():
         
         if entered_otp == session.get('pending_otp'):
             # OTP correct - complete login
-            session['username'] = session.pop('pending_username')
+            session['user'] = session.pop('pending_username')  # Use 'user' key for template
+            session['username'] = session['user']  # Keep both for compatibility
             session.pop('pending_otp', None)
             session.pop('otp_email', None)
             
@@ -274,40 +275,43 @@ def verify_otp():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    """Main dashboard"""
+    """Main dashboard - original VaultX UI"""
     # Get user's files
     files = []
     try:
         for filename in os.listdir(app.config['UPLOAD_FOLDER']):
-            if filename.startswith(f"{session['username']}_"):
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file_size = os.path.getsize(file_path)
-                files.append({
-                    'name': filename[len(session['username'])+1:],  # Remove username prefix
-                    'size': f"{file_size / 1024:.1f} KB",
-                    'encrypted_name': filename
-                })
+            if filename.startswith(f"{session['username']}_") and filename.endswith('.enc'):
+                # Remove username prefix and .enc extension
+                display_name = filename[len(session['username'])+1:-4]
+                files.append(display_name)
     except Exception as e:
         print(f"Error listing files: {e}")
     
-    return render_template('dashboard.html', files=files, username=session['username'])
+    # Get recent activity (mock data for now)
+    history = [
+        (f"File uploaded", "upload", "2 min ago"),
+        (f"Login successful", "login", "5 min ago"),
+        (f"File downloaded", "download", "1 hour ago"),
+    ]
+    
+    return render_template('home.html', files=files, history=history)
 
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_file():
     """Handle file upload"""
     if 'file' not in request.files:
-        flash('No file selected', 'error')
+        flash('No file selected')
         return redirect(url_for('dashboard'))
     
     file = request.files['file']
     if file.filename == '':
-        flash('No file selected', 'error')
+        flash('No file selected')
         return redirect(url_for('dashboard'))
     
     if file:
         filename = secure_filename(file.filename)
-        username = session['username']
+        username = session['user']
         
         # Save original file temporarily
         temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{filename}")
@@ -320,9 +324,9 @@ def upload_file():
         if encrypt_file(temp_path, encrypted_path):
             os.remove(temp_path)  # Remove temp file
             log_file_action(username, filename, 'upload', request.remote_addr)
-            flash(f'File "{filename}" uploaded and encrypted successfully!', 'success')
+            flash(f'File "{filename}" uploaded and encrypted successfully!')
         else:
-            flash('File encryption failed', 'error')
+            flash('File encryption failed')
     
     return redirect(url_for('dashboard'))
 
@@ -330,7 +334,7 @@ def upload_file():
 @login_required
 def download_file(filename):
     """Handle file download"""
-    username = session['username']
+    username = session['user']
     encrypted_filename = f"{username}_{filename}.enc"
     encrypted_path = os.path.join(app.config['UPLOAD_FOLDER'], encrypted_filename)
     
@@ -358,15 +362,112 @@ def download_file(filename):
             download_name=filename
         )
     else:
-        flash('File decryption failed', 'error')
+        flash('File decryption failed')
         return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 def logout():
     """Logout user"""
     session.clear()
-    flash('Logged out successfully', 'success')
+    flash('Logged out successfully')
     return redirect(url_for('login'))
+
+@app.route('/delete/<filename>')
+@login_required
+def delete_file(filename):
+    """Delete file"""
+    username = session['user']
+    encrypted_filename = f"{username}_{filename}.enc"
+    encrypted_path = os.path.join(app.config['UPLOAD_FOLDER'], encrypted_filename)
+    
+    if os.path.exists(encrypted_path):
+        try:
+            os.remove(encrypted_path)
+            log_file_action(username, filename, 'delete', request.remote_addr)
+            flash(f'File "{filename}" deleted successfully!')
+        except Exception as e:
+            flash(f'Error deleting file: {e}')
+    else:
+        flash('File not found')
+    
+    return redirect(url_for('dashboard'))
+
+@app.route('/share/<filename>', methods=['POST'])
+@login_required
+def share_file(filename):
+    """Share file via email"""
+    email = request.form.get('email')
+    if not email:
+        flash('Email address required')
+        return redirect(url_for('dashboard'))
+    
+    username = session['user']
+    
+    # Send share notification
+    try:
+        msg = EmailMessage()
+        msg['Subject'] = f'VaultX File Share: {filename}'
+        msg['From'] = os.getenv('SENDER_EMAIL')
+        msg['To'] = email
+        msg.set_content(f'''
+Hello,
+
+{username} has shared a file with you: {filename}
+
+This file is encrypted and stored securely on VaultX.
+
+Best regards,
+VaultX Team
+        ''')
+        
+        sender_email = os.getenv('SENDER_EMAIL')
+        sender_password = os.getenv('SENDER_PASSWORD')
+        
+        if sender_email and sender_password:
+            with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            
+            log_file_action(username, filename, 'share', request.remote_addr)
+            flash(f'File "{filename}" shared with {email}')
+        else:
+            flash('Email not configured')
+    except Exception as e:
+        flash(f'Error sharing file: {e}')
+    
+    return redirect(url_for('dashboard'))
+
+# Placeholder routes for sidebar links
+@app.route('/network')
+@login_required
+def network():
+    flash('Network page - Coming soon!')
+    return redirect(url_for('dashboard'))
+
+@app.route('/profile')
+@login_required
+def profile():
+    flash('Profile page - Coming soon!')
+    return redirect(url_for('dashboard'))
+
+@app.route('/analytics')
+@login_required
+def analytics():
+    flash('Analytics page - Coming soon!')
+    return redirect(url_for('dashboard'))
+
+@app.route('/search')
+@login_required
+def search():
+    flash('Search page - Coming soon!')
+    return redirect(url_for('dashboard'))
+
+@app.route('/security')
+@login_required
+def security():
+    flash('Security page - Coming soon!')
+    return redirect(url_for('dashboard'))
 
 @app.route('/health')
 def health():
