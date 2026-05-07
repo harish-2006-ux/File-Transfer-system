@@ -402,39 +402,112 @@ def share_file(filename):
         return redirect(url_for('dashboard'))
     
     username = session['user']
+    sender_email = os.getenv('SENDER_EMAIL')
+    sender_password = os.getenv('SENDER_PASSWORD')
+    
+    # Debug: Check if environment variables are loaded
+    print(f"DEBUG: SENDER_EMAIL = {sender_email}")
+    print(f"DEBUG: SENDER_PASSWORD = {'*' * len(sender_password) if sender_password else 'None'}")
+    
+    if not sender_email or not sender_password:
+        flash('Email configuration missing. Please contact administrator.')
+        return redirect(url_for('dashboard'))
     
     # Send share notification
     try:
         msg = EmailMessage()
-        msg['Subject'] = f'VaultX File Share: {filename}'
-        msg['From'] = os.getenv('SENDER_EMAIL')
+        msg['Subject'] = f'🔐 VaultX File Share: {filename}'
+        msg['From'] = sender_email
         msg['To'] = email
+        
+        # Create a professional HTML email
+        html_content = f'''
+        <html>
+        <body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #00c8ff; margin: 0;">🔐 VaultX</h1>
+                    <p style="color: #666; margin: 5px 0;">Secure File Transfer</p>
+                </div>
+                
+                <h2 style="color: #333;">File Shared With You</h2>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p><strong>From:</strong> {username}</p>
+                    <p><strong>File:</strong> {filename}</p>
+                    <p><strong>Shared:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                </div>
+                
+                <p>Hello,</p>
+                <p><strong>{username}</strong> has securely shared a file with you through VaultX.</p>
+                
+                <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #0066cc; margin-top: 0;">🔒 Security Features:</h3>
+                    <ul style="color: #333;">
+                        <li>File is encrypted with AES-256 encryption</li>
+                        <li>Secure storage and transfer</li>
+                        <li>Access controlled by VaultX platform</li>
+                    </ul>
+                </div>
+                
+                <p>To access this file, please contact <strong>{username}</strong> for access instructions.</p>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                
+                <div style="text-align: center; color: #666; font-size: 12px;">
+                    <p>This email was sent from VaultX Secure File Transfer System</p>
+                    <p>If you received this email in error, please ignore it.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
+        
+        # Set both plain text and HTML content
         msg.set_content(f'''
-Hello,
+VaultX File Share Notification
 
-{username} has shared a file with you: {filename}
+From: {username}
+File: {filename}
+Shared: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-This file is encrypted and stored securely on VaultX.
+{username} has shared a file with you through VaultX secure file transfer system.
 
-Best regards,
-VaultX Team
+The file is encrypted with AES-256 encryption and stored securely.
+
+To access this file, please contact {username} for access instructions.
+
+---
+VaultX Secure File Transfer System
         ''')
         
-        sender_email = os.getenv('SENDER_EMAIL')
-        sender_password = os.getenv('SENDER_PASSWORD')
+        msg.add_alternative(html_content, subtype='html')
         
-        if sender_email and sender_password:
-            with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
-                server.starttls()
-                server.login(sender_email, sender_password)
-                server.send_message(msg)
-            
-            log_file_action(username, filename, 'share', request.remote_addr)
-            flash(f'File "{filename}" shared with {email}')
-        else:
-            flash('Email not configured')
+        print(f"DEBUG: Attempting to send email to {email}")
+        
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        
+        log_file_action(username, filename, 'share', request.remote_addr)
+        flash(f'✅ File "{filename}" shared successfully with {email}!')
+        print(f"DEBUG: Email sent successfully to {email}")
+        
+    except smtplib.SMTPAuthenticationError as e:
+        error_msg = f'Email authentication failed. Please check app password.'
+        flash(error_msg)
+        print(f"DEBUG: SMTP Auth Error: {e}")
+        
+    except smtplib.SMTPException as e:
+        error_msg = f'Email server error: {str(e)}'
+        flash(error_msg)
+        print(f"DEBUG: SMTP Error: {e}")
+        
     except Exception as e:
-        flash(f'Error sharing file: {e}')
+        error_msg = f'Error sharing file: {str(e)}'
+        flash(error_msg)
+        print(f"DEBUG: General Error: {e}")
     
     return redirect(url_for('dashboard'))
 
