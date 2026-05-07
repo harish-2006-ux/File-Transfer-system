@@ -1,28 +1,411 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTP Verification — VaultX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #020408;
+      --c-surface: #060d18;
+      --c-card: rgba(8, 20, 40, 0.9);
+      --c-border: rgba(0, 200, 255, 0.12);
+      --c-border-hi: rgba(0, 200, 255, 0.4);
+      --c-cyan: #00c8ff;
+      --c-green: #00ff88;
+      --c-violet: #9b5cff;
+      --c-red: #ff4466;
+      --c-gold: #ffcc44;
+      --c-text: #d4eaf7;
+      --c-muted: #4a6a80;
+      --c-dim: #1a2d40;
+      --f-display: 'Outfit', sans-serif;
+      --f-mono: 'JetBrains Mono', monospace;
+      --radius: 16px;
+    }
 
-{% block title %}OTP Verification - VaultX{% endblock %}
-
-{% block content %}
-<h2>🔑 Enter OTP</h2>
-<p style="text-align: center; color: #666; margin-bottom: 2rem;">
-    We've sent a 6-digit code to {{ email }}
-</p>
-
-<form method="POST">
-    <div class="form-group">
-        <label for="otp">6-Digit OTP</label>
-        <input type="text" id="otp" name="otp" required maxlength="6" pattern="[0-9]{6}" 
-               style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
-    </div>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     
-    <button type="submit" class="btn">Verify OTP</button>
-</form>
+    body {
+      font-family: var(--f-display);
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
-<div class="nav-links">
-    <a href="{{ url_for('login') }}">Back to Login</a>
-</div>
+    /* Starfield background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(1px 1px at 20% 30%, rgba(0,200,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 10%, rgba(0,255,136,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 70%, rgba(155,92,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 90%, rgba(0,200,255,.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 60%, rgba(0,255,136,.5) 0%, transparent 100%),
+        radial-gradient(ellipse 900px 600px at 15% 20%, rgba(0,200,255,.04) 0%, transparent 70%),
+        radial-gradient(ellipse 700px 800px at 85% 80%, rgba(155,92,255,.05) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+      animation: starDrift 60s linear infinite;
+    }
 
-<div style="margin-top: 2rem; padding: 1rem; background: #fff3cd; border-radius: 8px; font-size: 0.9rem; color: #856404;">
-    <strong>Note:</strong> Check your email for the OTP. If email is not configured, the OTP will be displayed in the flash message above.
-</div>
-{% endblock %}
+    @keyframes starDrift {
+      from { transform: translateY(0); }
+      to { transform: translateY(-40px); }
+    }
+
+    .otp-container {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      animation: slideUp 0.6s ease both;
+      z-index: 1;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .otp-container::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,204,68,.05), transparent);
+      animation: shimmer 3s ease infinite;
+    }
+
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--c-gold), var(--c-violet));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: #000;
+      margin: 0 auto 16px;
+      box-shadow: 0 0 30px rgba(255,204,68,.3);
+      animation: logoPulse 3s ease infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(255,204,68,.3); }
+      50% { box-shadow: 0 0 50px rgba(155,92,255,.5); }
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--c-gold), var(--c-violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-subtitle {
+      font-family: var(--f-mono);
+      font-size: 12px;
+      color: var(--c-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .otp-info {
+      text-align: center;
+      margin-bottom: 32px;
+      padding: 16px;
+      background: rgba(255,204,68,.05);
+      border: 1px solid rgba(255,204,68,.15);
+      border-radius: 12px;
+    }
+
+    .otp-info-title {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--c-gold);
+      margin-bottom: 8px;
+    }
+
+    .otp-info-text {
+      font-size: 14px;
+      color: var(--c-text);
+      line-height: 1.5;
+    }
+
+    .otp-info-email {
+      font-family: var(--f-mono);
+      color: var(--c-gold);
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--c-muted);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .otp-input {
+      width: 100%;
+      padding: 20px;
+      background: rgba(0,0,0,.5);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      color: var(--c-text);
+      font-family: var(--f-mono);
+      font-size: 24px;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 8px;
+      outline: none;
+      transition: all .3s ease;
+    }
+
+    .otp-input::placeholder {
+      color: rgba(74,106,128,.6);
+      letter-spacing: 4px;
+    }
+
+    .otp-input:focus {
+      border-color: var(--c-gold);
+      box-shadow: 0 0 0 3px rgba(255,204,68,.1), 0 0 20px rgba(255,204,68,.06);
+      background: rgba(0,0,0,.7);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--c-gold) 0%, #ffaa00 100%);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-family: var(--f-display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      cursor: pointer;
+      transition: all .3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.2) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(255,204,68,.4);
+    }
+
+    .btn-primary:hover::after {
+      opacity: 1;
+    }
+
+    .btn-primary:active {
+      transform: none;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--c-border);
+    }
+
+    .divider span {
+      background: var(--c-card);
+      padding: 0 16px;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--c-muted);
+      letter-spacing: 1px;
+    }
+
+    .back-link {
+      text-align: center;
+    }
+
+    .back-link a {
+      color: var(--c-gold);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color .2s;
+    }
+
+    .back-link a:hover {
+      color: var(--c-violet);
+    }
+
+    .flash {
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: var(--f-mono);
+      font-size: 12px;
+      border-left: 3px solid var(--c-gold);
+      background: rgba(255,204,68,.07);
+      color: var(--c-gold);
+      animation: slideDown 0.4s ease both;
+    }
+
+    .flash.error {
+      border-left-color: var(--c-red);
+      background: rgba(255,68,102,.07);
+      color: var(--c-red);
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+      padding: 8px;
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--c-muted);
+      letter-spacing: 1px;
+    }
+
+    .security-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--c-gold);
+      box-shadow: 0 0 8px var(--c-gold);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="otp-container">
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon">🔑</div>
+      <div class="logo-text">VaultX</div>
+      <div class="logo-subtitle">Two-Factor Auth</div>
+    </div>
+
+    <!-- OTP Info -->
+    <div class="otp-info">
+      <div class="otp-info-title">Verification Required</div>
+      <div class="otp-info-text">
+        We've sent a 6-digit code to<br>
+        <span class="otp-info-email">{{ email }}</span>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% for msg in get_flashed_messages() %}
+    <div class="flash">{{ msg }}</div>
+    {% endfor %}
+
+    <!-- OTP Form -->
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label" for="otp">Enter 6-Digit Code</label>
+        <input type="text" id="otp" name="otp" class="otp-input" 
+               placeholder="000000" required maxlength="6" pattern="[0-9]{6}"
+               autocomplete="one-time-code">
+      </div>
+      
+      <button type="submit" class="btn-primary">
+        Verify & Access →
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="divider">
+      <span>or</span>
+    </div>
+
+    <!-- Back Link -->
+    <div class="back-link">
+      <a href="{{ url_for('login') }}">← Back to Login</a>
+    </div>
+
+    <!-- Security Badge -->
+    <div class="security-badge">
+      <div class="security-dot"></div>
+      2FA PROTECTION ACTIVE
+    </div>
+  </div>
+
+  <script>
+    // Auto-focus OTP input
+    document.getElementById('otp').focus();
+    
+    // Auto-submit when 6 digits entered
+    document.getElementById('otp').addEventListener('input', function(e) {
+      if (e.target.value.length === 6) {
+        // Small delay for better UX
+        setTimeout(() => {
+          e.target.form.submit();
+        }, 300);
+      }
+    });
+  </script>
+</body>
+</html>

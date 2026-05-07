@@ -1,34 +1,371 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — VaultX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #020408;
+      --c-surface: #060d18;
+      --c-card: rgba(8, 20, 40, 0.9);
+      --c-border: rgba(0, 200, 255, 0.12);
+      --c-border-hi: rgba(0, 200, 255, 0.4);
+      --c-cyan: #00c8ff;
+      --c-green: #00ff88;
+      --c-violet: #9b5cff;
+      --c-red: #ff4466;
+      --c-text: #d4eaf7;
+      --c-muted: #4a6a80;
+      --c-dim: #1a2d40;
+      --f-display: 'Outfit', sans-serif;
+      --f-mono: 'JetBrains Mono', monospace;
+      --radius: 16px;
+    }
 
-{% block title %}Sign Up - VaultX{% endblock %}
-
-{% block content %}
-<h2>📝 Create VaultX Account</h2>
-<p style="text-align: center; color: #666; margin-bottom: 2rem;">
-    Join the secure file transfer platform
-</p>
-
-<form method="POST">
-    <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" required>
-    </div>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     
-    <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required>
-    </div>
-    
-    <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required minlength="6">
-        <small style="color: #666;">Minimum 6 characters</small>
-    </div>
-    
-    <button type="submit" class="btn">Create Account</button>
-</form>
+    body {
+      font-family: var(--f-display);
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
-<div class="nav-links">
-    <a href="{{ url_for('login') }}">Already have an account? Login</a>
-</div>
-{% endblock %}
+    /* Starfield background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(1px 1px at 20% 30%, rgba(0,200,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 10%, rgba(0,255,136,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 70%, rgba(155,92,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 90%, rgba(0,200,255,.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 60%, rgba(0,255,136,.5) 0%, transparent 100%),
+        radial-gradient(ellipse 900px 600px at 15% 20%, rgba(0,200,255,.04) 0%, transparent 70%),
+        radial-gradient(ellipse 700px 800px at 85% 80%, rgba(155,92,255,.05) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+      animation: starDrift 60s linear infinite;
+    }
+
+    @keyframes starDrift {
+      from { transform: translateY(0); }
+      to { transform: translateY(-40px); }
+    }
+
+    .signup-container {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      animation: slideUp 0.6s ease both;
+      z-index: 1;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .signup-container::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,255,136,.05), transparent);
+      animation: shimmer 3s ease infinite;
+    }
+
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--c-green), var(--c-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: #000;
+      margin: 0 auto 16px;
+      box-shadow: 0 0 30px rgba(0,255,136,.3);
+      animation: logoPulse 3s ease infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(0,255,136,.3); }
+      50% { box-shadow: 0 0 50px rgba(0,200,255,.5); }
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--c-green), var(--c-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-subtitle {
+      font-family: var(--f-mono);
+      font-size: 12px;
+      color: var(--c-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--c-muted);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(0,0,0,.5);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      color: var(--c-text);
+      font-family: var(--f-mono);
+      font-size: 14px;
+      outline: none;
+      transition: all .3s ease;
+    }
+
+    .form-input::placeholder {
+      color: rgba(74,106,128,.6);
+    }
+
+    .form-input:focus {
+      border-color: var(--c-green);
+      box-shadow: 0 0 0 3px rgba(0,255,136,.1), 0 0 20px rgba(0,255,136,.06);
+      background: rgba(0,0,0,.7);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--c-green) 0%, #00cc66 100%);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-family: var(--f-display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      cursor: pointer;
+      transition: all .3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.2) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(0,255,136,.4);
+    }
+
+    .btn-primary:hover::after {
+      opacity: 1;
+    }
+
+    .btn-primary:active {
+      transform: none;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--c-border);
+    }
+
+    .divider span {
+      background: var(--c-card);
+      padding: 0 16px;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--c-muted);
+      letter-spacing: 1px;
+    }
+
+    .login-link {
+      text-align: center;
+    }
+
+    .login-link a {
+      color: var(--c-green);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color .2s;
+    }
+
+    .login-link a:hover {
+      color: var(--c-cyan);
+    }
+
+    .flash {
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: var(--f-mono);
+      font-size: 12px;
+      border-left: 3px solid var(--c-green);
+      background: rgba(0,255,136,.07);
+      color: var(--c-green);
+      animation: slideDown 0.4s ease both;
+    }
+
+    .flash.error {
+      border-left-color: var(--c-red);
+      background: rgba(255,68,102,.07);
+      color: var(--c-red);
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+      padding: 8px;
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--c-muted);
+      letter-spacing: 1px;
+    }
+
+    .security-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--c-green);
+      box-shadow: 0 0 8px var(--c-green);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .password-hint {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--c-muted);
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-container">
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon">V</div>
+      <div class="logo-text">VaultX</div>
+      <div class="logo-subtitle">Create Account</div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% for msg in get_flashed_messages() %}
+    <div class="flash">{{ msg }}</div>
+    {% endfor %}
+
+    <!-- Signup Form -->
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input type="text" id="username" name="username" class="form-input" 
+               placeholder="Choose a username" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input type="email" id="email" name="email" class="form-input" 
+               placeholder="your@email.com" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-input" 
+               placeholder="Create a secure password" required minlength="6">
+        <div class="password-hint">Minimum 6 characters required</div>
+      </div>
+      
+      <button type="submit" class="btn-primary">
+        Create Vault →
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="divider">
+      <span>or</span>
+    </div>
+
+    <!-- Login Link -->
+    <div class="login-link">
+      <a href="{{ url_for('login') }}">Already have an account? Sign In</a>
+    </div>
+
+    <!-- Security Badge -->
+    <div class="security-badge">
+      <div class="security-dot"></div>
+      SECURE REGISTRATION
+    </div>
+  </div>
+</body>
+</html>
