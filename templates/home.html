@@ -5,7 +5,6 @@
   <title>Dashboard — VaultX</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -234,83 +233,6 @@
 </div>
 
 <script>
-// WebSocket connection for real-time updates
-const socket = io();
-
-socket.on('connect', () => {
-  console.log('WebSocket connected');
-  socket.emit('join_room', { user_id: '{{ session["user"] }}', username: '{{ session["user"] }}' });
-});
-
-socket.on('file_uploaded', (data) => {
-  showNotification('✅ File Uploaded', data.message);
-});
-
-socket.on('file_downloaded', (data) => {
-  showNotification('📥 File Downloaded', data.message);
-});
-
-socket.on('file_deleted', (data) => {
-  showNotification('🗑️ File Deleted', data.message);
-});
-
-socket.on('new_login', (data) => {
-  showNotification('🔐 New Login', `Login from ${data.location.city || 'Unknown'}`);
-});
-
-socket.on('suspicious_activity', (data) => {
-  showNotification('⚠️ Security Alert', data.message, 'warning');
-});
-
-socket.on('notification', (data) => {
-  showNotification(data.title, data.message, data.type);
-});
-
-function showNotification(title, message, type = 'info') {
-  // Create notification element
-  const notif = document.createElement('div');
-  notif.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(4,10,20,.97);
-    border: 1px solid ${type === 'warning' ? 'rgba(255,68,102,.3)' : 'rgba(0,200,255,.3)'};
-    border-radius: 12px;
-    padding: 16px 20px;
-    z-index: 9999;
-    min-width: 300px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.6);
-    animation: slideIn 0.3s ease-out;
-  `;
-  
-  notif.innerHTML = `
-    <div style="font-weight: 600; color: #d4eaf7; margin-bottom: 4px;">${title}</div>
-    <div style="font-size: 13px; color: var(--c-muted);">${message}</div>
-  `;
-  
-  document.body.appendChild(notif);
-  
-  // Auto remove after 5 seconds
-  setTimeout(() => {
-    notif.style.animation = 'slideOut 0.3s ease-out';
-    setTimeout(() => notif.remove(), 300);
-  }, 5000);
-}
-
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(400px); opacity: 0; }
-  }
-`;
-document.head.appendChild(style);
-
 // Sidebar toggle
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
@@ -399,6 +321,51 @@ document.querySelectorAll('.stat-num').forEach(el=>{
     if(current>=target) clearInterval(iv);
   },40);
 });
+
+// Simple notification system (without WebSocket)
+function showNotification(title, message, type = 'info') {
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(4,10,20,.97);
+    border: 1px solid ${type === 'warning' ? 'rgba(255,68,102,.3)' : 'rgba(0,200,255,.3)'};
+    border-radius: 12px;
+    padding: 16px 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.6);
+    animation: slideIn 0.3s ease-out;
+  `;
+  
+  notif.innerHTML = `
+    <div style="font-weight: 600; color: #d4eaf7; margin-bottom: 4px;">${title}</div>
+    <div style="font-size: 13px; color: var(--c-muted);">${message}</div>
+  `;
+  
+  document.body.appendChild(notif);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    notif.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => notif.remove(), 300);
+  }, 5000);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
 </script>
 </body>
 </html>
